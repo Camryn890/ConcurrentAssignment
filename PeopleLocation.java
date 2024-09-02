@@ -57,11 +57,11 @@ public class PeopleLocation  { // this is made a separate class so don't have to
 	public  int getID() {	return ID.get();	}
 
 	//getter
-	public  boolean inPool() {
+	public boolean inPool() {
 		return inStadium.get();
 	}
 	//getter and setter
-	public  Color getColor() { return myColor; }
+	public synchronized Color getColor() { return myColor; }
 
-	public void setColor(Color myColor) { this.myColor= myColor; }
+	public synchronized void setColor(Color myColor) { this.myColor= myColor; }
 }

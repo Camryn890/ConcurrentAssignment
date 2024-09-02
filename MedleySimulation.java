@@ -1,6 +1,8 @@
 //M. M. Kuttel 2024 mkuttel@gmail.com
 // MedleySimulation main class, starts all threads
 package medleySimulation;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.*;
 
 import javax.swing.*;
@@ -26,7 +28,6 @@ public class MedleySimulation {
 	
 	static FinishCounter finishLine; //records who won
 	static CounterDisplay counterDisplay ; //threaded display of counter
-	
 
 	//Method to setup all the elements of the GUI
 	public static void setupGUI(int frameX,int frameY) {
@@ -73,7 +74,9 @@ public class MedleySimulation {
 
 				//start teams, which start swimmers.
 				for (int i=0;i<numTeams;i++) {
+
 					teams[i].start();
+
 				}
 			    	  //does nothing - fix this 	  
 		    }
@@ -99,7 +102,7 @@ public class MedleySimulation {
 	
 	
 //Main method - starts it all
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException, BrokenBarrierException {
 	
 	
 	    finishLine = new FinishCounter(); //counters for people inside and outside club
@@ -110,7 +113,10 @@ public class MedleySimulation {
 	    peopleLocations = new PeopleLocation[numTeams*SwimTeam.sizeOfTeam]; //four swimmers per team
 		teams = new SwimTeam[numTeams];
 		for (int i=0;i<numTeams;i++) {
-        	teams[i]=new SwimTeam(i, finishLine, peopleLocations);        	
+			//barrier.notifyAll();
+        	teams[i]=new SwimTeam(i, finishLine, peopleLocations);
+			//barrier.wait();
+
 		}
 		setupGUI(frameX, frameY);  //Start Panel thread - for drawing animation
 	}

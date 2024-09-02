@@ -6,27 +6,37 @@ package medleySimulation;
 import java.awt.Color;
 
 import java.util.Random;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 public class Swimmer extends Thread {
 	
 	public static StadiumGrid stadium; //shared 
 	private FinishCounter finish; //shared
-	
-		
+
 	GridBlock currentBlock;
 	private Random rand;
 	private int movingSpeed;
 	
 	private PeopleLocation myLocation;
 	private AtomicInteger ID; //thread ID
-	private AtomicInteger team; // team ID
+	public int team; // team ID
 	private GridBlock start;
 
+	public static int number = 10;
+	public static final CyclicBarrier cyclicBarrier = new CyclicBarrier(number);
+
+	public CountDownLatch latch;
+
+	private final Lock ik;
+
 	public enum SwimStroke {
+
 		Backstroke(1,2.5,Color.black),
 		Breaststroke(2,2.1,new Color(255,102,0)),
 		Butterfly(3,2.55,Color.magenta),
@@ -50,15 +60,17 @@ public class Swimmer extends Thread {
 	    private final SwimStroke swimStroke;
 	
 	//Constructor
-	Swimmer( int ID, int t, PeopleLocation loc, FinishCounter f, int speed, SwimStroke s) {
+	Swimmer( int ID, int t, PeopleLocation loc, FinishCounter f, int speed, SwimStroke s, Lock sharedlock) {
 		this.swimStroke = s;
 		this.ID = new AtomicInteger(ID);
 		movingSpeed=speed; //range of speeds for swimmers
 		this.myLocation = loc;
-		this.team = new AtomicInteger(t);
-		start = stadium.returnStartingBlock(team.get());
+		this.team = t;
+		start = stadium.returnStartingBlock(team);
 		finish=f;
 		rand=new Random();
+		latch = new CountDownLatch(4);
+		ik = sharedlock;
 	}
 	
 	//getter
@@ -144,24 +156,38 @@ public class Swimmer extends Thread {
 			
 			//Swimmer arrives
 			sleep(movingSpeed+(rand.nextInt(10))); //arriving takes a while
+
+
 			myLocation.setArrived();
-			enterStadium();	
-			
+
+			enterStadium();
+
 			goToStartingBlocks();
-								
-			dive(); 
-				
+
+			cyclicBarrier.await();
+
+			dive();
+
 			swimRace();
+
+			ik.lock();
+
+
+
 			if(swimStroke.order==4) {
-				finish.finishRace(ID.get(), team.get()); // fnishline
+				finish.finishRace(ID.get(), team); // finishline
 			}
 			else {
 				//System.out.println("Thread "+this.ID + " done " + currentBlock.getX()  + " " +currentBlock.getY() );			
 				exitPool();//if not last swimmer leave pool
+				ik.unlock();
 			}
 			
-		} catch (InterruptedException e1) {  //do nothing
-		} 
-	}
+		}
+		catch (InterruptedException e1) {  //do nothing
+		} catch (BrokenBarrierException e) {
+            throw new RuntimeException(e);
+        }
+    }
 	
 }

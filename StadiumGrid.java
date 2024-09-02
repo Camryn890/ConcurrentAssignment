@@ -3,6 +3,9 @@
 
 package medleySimulation;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
+
 //This class represents the club as a grid of GridBlocks
 public class StadiumGrid {
 	private GridBlock [][] Blocks;
@@ -15,8 +18,7 @@ public class StadiumGrid {
 	private GridBlock startingBlocks[]; //hard coded starting blocks
 	private final static int minX =5;//minimum x dimension
 	private final static int minY =5;//minimum y dimension
-	
-	
+
 	StadiumGrid(int x, int y, int nTeams ,FinishCounter c) throws InterruptedException {
 		if (x<minX) x=minX; //minimum x
 		if (y<minY) y=minY; //minimum x
@@ -30,7 +32,7 @@ public class StadiumGrid {
 		}
 	
 	//initialise the grid, creating all the GridBlocks, marking the starting blocks
-	private  void initGrid() throws InterruptedException {
+	private synchronized void initGrid() throws InterruptedException {
 		int startBIndex=0;
 		for (int i=0;i<x;i++) {
 			for (int j=0;j<y;j++) {
@@ -66,9 +68,10 @@ public class StadiumGrid {
 	
 	//a person enters the stadium
 	public synchronized GridBlock enterStadium(PeopleLocation myLocation) throws InterruptedException  {
-				while((entrance.get(myLocation.getID()))) { wait();} //wait at entrace until entrance is free - spinning, not good
+				while(!(entrance.get(myLocation.getID()))) {wait();} //wait at entrace until entrance is free - spinning, not good
 				myLocation.setLocation(entrance);
 				myLocation.setInStadium(true);
+				//barrier.notifyAll();
 				return entrance;
 			
 	}
@@ -105,7 +108,7 @@ public class StadiumGrid {
 		
 		
 		while((!newBlock.get(myLocation.getID()))) { wait();} //wait until block is free - but spinning is bad
-			myLocation.setLocation(newBlock);		
+			myLocation.setLocation(newBlock);
 			currentBlock.release(); //must release current block\
 			notifyAll();
 			return newBlock;
@@ -125,8 +128,8 @@ public synchronized GridBlock jumpTo(GridBlock currentBlock,int x, int y,PeopleL
 		GridBlock newBlock= whichBlock(x,y);//try diagonal or y
 		
 		
-			while((!newBlock.get(myLocation.getID()))) {wait();} //wait until block is free - but spinning, not good
-			myLocation.setLocation(newBlock);		
+			while((!newBlock.get(myLocation.getID()))) { wait();} //wait until block is free - but spinning, not good
+			myLocation.setLocation(newBlock);
 			currentBlock.release(); //must release current block
 			notifyAll();
 			return newBlock;
@@ -135,7 +138,7 @@ public synchronized GridBlock jumpTo(GridBlock currentBlock,int x, int y,PeopleL
 	} 
 	
 //x and y actually correspond to the grid pos, but this is for generality.
-	public GridBlock whichBlock(int xPos, int yPos) {
+	public synchronized GridBlock whichBlock(int xPos, int yPos) {
 		if (inGrid(xPos,yPos)) {
 			return Blocks[xPos][yPos];
 		}
