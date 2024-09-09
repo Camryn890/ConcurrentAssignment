@@ -5,31 +5,36 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FinishCounter {
-	private AtomicBoolean firstAcrossLine; //flag
-	private AtomicInteger winner; //who won
-	private AtomicInteger winningTeam; //counter for patrons who have left the club
-	
+	private final AtomicBoolean firstAcrossLine; //flag
+	private final AtomicInteger winner; //who won
+
+	private final AtomicInteger winningTeam; //counter for patrons who have left the club
+	boolean won = true;
+
 	FinishCounter() { 
 		firstAcrossLine = new AtomicBoolean(true);//no-one has won at start
 		winner= new AtomicInteger(-1); //no-one has won at start
 		winningTeam= new AtomicInteger(-1); //no-one has won at start
+
 	}
 		
 	//This is called by a swimmer when they touch the fnish line
-	public synchronized void finishRace(int swimmer, int team) {
-		//boolean won =false;
+	public void finishRace(int swimmer, int team) {
+
 		if(firstAcrossLine.compareAndSet(true,false)) {
-			//won = true;
 			winner.set(swimmer);
 			winningTeam.set(team);}
+
 	}
 	
 	//Has race been won?
-	public synchronized boolean isRaceWon() {
+	public boolean isRaceWon() {
 		return !firstAcrossLine.get();
 	}
 
-	public synchronized int getWinner() { return winner.get(); }
+
+	public int getWinner() { return winner.get(); }
 	
-	public synchronized int getWinningTeam() { return winningTeam.get();}
+	public int getWinningTeam() { return winningTeam.get();}
+
 }

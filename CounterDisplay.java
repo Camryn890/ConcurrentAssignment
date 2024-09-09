@@ -10,7 +10,7 @@ import javax.swing.JLabel;
 public class CounterDisplay  implements Runnable {
 	
 	private FinishCounter results;
-	private JLabel win;
+	private final JLabel win;
 		
 	CounterDisplay(JLabel w, FinishCounter score) {
         this.win=w;
@@ -19,15 +19,17 @@ public class CounterDisplay  implements Runnable {
 	
 	public void run() { //this thread just updates the display of a text field
         while (true) {
-        	//test changes colour when the race is won
-        	if (results.isRaceWon()) {
-        		win.setForeground(Color.RED);
-               	win.setText("Winning Team: " + results.getWinningTeam() + "!!"); 
-        	}
-        	else {
-        		win.setForeground(Color.BLACK);
-        		win.setText("------"); 
-        	}	
+			synchronized (win) {
+				//test changes colour when the race is won
+				if (results.isRaceWon()) {
+					win.setForeground(Color.RED);
+					win.setText("Winning Team: " + results.getWinningTeam() + "!!");
+				}
+		else {
+					win.setForeground(Color.BLACK);
+					win.setText("------");
+				}
+			}
         }
     }
 }

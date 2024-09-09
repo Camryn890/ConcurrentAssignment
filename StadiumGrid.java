@@ -56,7 +56,7 @@ public class StadiumGrid {
 	
 	public synchronized int getMaxY() { return y;}
 
-	public synchronized GridBlock whereEntrance() {  return entrance; }
+	public GridBlock whereEntrance() {  return entrance; }
 
 	//is this a valid grid reference?
 	public synchronized boolean inGrid(int i, int j) {

@@ -28,11 +28,6 @@ public class Swimmer extends Thread {
 	private int team; // team ID
 	private GridBlock start;
 	public CyclicBarrier barrier;
-	public Lock lock;
-	public Condition variable;
-
-	public CyclicBarrier cyclicBarrier = new CyclicBarrier(10);
-
 	public CountDownLatch[] latch;
 	public enum SwimStroke {
 		Backstroke(1,2.5,Color.black),
@@ -57,7 +52,7 @@ public class Swimmer extends Thread {
 	private final SwimStroke swimStroke;
 
 	//Constructor
-	Swimmer(int ID, int t, PeopleLocation loc, FinishCounter f, int speed, SwimStroke s, CyclicBarrier barrier, Lock lock,CountDownLatch[] latch, CountDownLatch lat) {
+	Swimmer(int ID, int t, PeopleLocation loc, FinishCounter f, int speed, SwimStroke s, CyclicBarrier barrier,CountDownLatch[] latch) {
 		this.swimStroke = s;
 		this.ID=ID;
 		movingSpeed=speed; //range of speeds for swimmers
@@ -68,7 +63,6 @@ public class Swimmer extends Thread {
 		rand=new Random();
 
 		this.barrier = barrier;
-		this.lock = lock;
 		this.latch = latch;
 
 	}
@@ -161,30 +155,29 @@ public class Swimmer extends Thread {
 
 			enterStadium();
 
-			synchronized (currentBlock){currentBlock.notifyAll();}
-
-			barrier.await();
+			barrier.await(); // wait at barrier until all the "first" swimmers arrive
 
 			goToStartingBlocks();
 
+			// count down latch that counts down when each teams "first" swimmer is ready
 			SwimTeam.latches.countDown();
 
+			// waits until all swimmers are ready
 			SwimTeam.latches.await();
 
+			// if not first swimmer, then it waits for previous swimmers latch to count down
 			if(swimStroke.order != 1){latch[swimStroke.order -1].await();}
 
 			dive();
 
-
 			swimRace();
 
 			if(swimStroke.order==4) {
-				finish.finishRace(ID, team); // fnishline
+				finish.finishRace(ID, team);// fnishline
 			}
 			else {
 				//System.out.println("Thread "+this.ID + " done " + currentBlock.getX()  + " " +currentBlock.getY() );
-				latch[swimStroke.order].countDown();
-				//lock.unlock();
+				latch[swimStroke.order].countDown(); // count down latch for the next swimmer to start
 				exitPool();//if not last swimmer leave pool
 			}
 
